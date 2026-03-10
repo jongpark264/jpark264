@@ -1,0 +1,50 @@
+---
+title: "HW5"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+#install.packages("readxl")
+setwd("C:/Users/gun26/OneDrive/Desktop/Data-110/hw5")
+library(readxl)
+library(dplyr)
+library(ggplot2)
+
+df1<- read_excel("Airbnb_DC_25.csv")
+clean_df<- df1 %>% filter(!is.na(neighbourhood) & price > 0 & minimum_nights<= 31) %>%
+  mutate(main_hood = sub(",.*", "", neighbourhood)) %>% mutate(region = case_when(
+    main_hood %in% c("Union Station", "Capitol Hill", "Dupont Circle", "Shaw", "Downtown", "Howard University", "Foggy Bottom", "West End", "Mount Vernon Square", "Chinatown", "Penn Quarters", "Logan Circle") ~ "Central",
+    
+    main_hood %in% c("Columbia Heights", "Brightwood Park", "Kalorama Heights", "Takoma", "Adams Morgan", "Mount Pleasant", "Pleasant Plains", "Park View", "Crestwood", "Petworth", "Brightwood", "Lamont Riggs", "Colonial Village", "Hawthorne") ~ "North",
+    
+    main_hood %in% c("Edgewood", "Ivy City", "Brookland", "Near Southeast", "Eckington", "Trinidad", "Bloomingdale", "Truxton Circle", "Arboretum", "Carver Langston", "Deanwood", "Mayfair", "Capitol View:", "North Michigan Park", "Woodridge", "Eastland Gardens", "Twining", "Fairfax Village", "Capitol View") ~ "East",
+    
+    main_hood %in% c("Georgetown", "Cleveland Park", "Spring Valley", "Friendship Heights", "North Cleveland Park", "Woodley Park", "Massachusetts Avenue Heights", "Palisades", "Wesley Heights", "Tenleytown", "Chevy Chase", "Glover Park", "Cathedral Heights") ~ "West",
+    
+    main_hood %in% c("Anacostia", "River Terrace", "Douglas", "Sheridan", "Congress Heights", "Bellevue", "Navy Yard", "Waterfront", "Southwest", "Historic Anacostia", "Fairlawn", "Barry Farm", "Southwest Employment Area", "Woodland/Fort Stanton") ~ "South"))
+
+plot_data <- clean_df %>% group_by(region) %>% 
+  summarize(avg_price = mean(price, na.rm = TRUE),
+    avg_min_nights = mean(minimum_nights, na.rm = TRUE), count = n(),.groups = "drop")
+
+
+ggplot(plot_data, aes(x = avg_min_nights, y = avg_price, color = region)) +
+  geom_point(aes(size = count), alpha = 1) + scale_size(range = c(10, 25))+
+  labs(title = "Airbnb Regional Trends in Washington D.C.",
+    x = "Average Minimum Nights",
+    y = "Average Price (USD)",
+    caption = "Data Source: Airbnb",
+    color = "Region",
+    size = "Total Listings")
+```
+
+I created a scatter plot to compare the average price and average minimum stay for each region by dividing Washington D.C. into five regions (East, West, South, North, and Central). Before I create a plot, I used 'filter' to remove long-term stay listings where minimum nights exceed 31 days which is not common. After filtering, more than 1,500 data points were filtered, and I found out through searching that applying this filter can significantly reduce observations due to Washington D.C.'s lodging regulations. In other words, places where a minimum stay of 30 days or more is set can be seen as having a high probability of being a boarding house or room sharing rather than a business establishment. A key insight observed in the plot is that the center of the city has the highest average price and at the same time occupies the largest number of listings with a relatively high price range.
